@@ -1,17 +1,18 @@
 # Enkel kursanmälan med Swish
 
-Ett lättviktigt WordPress-plugin för kurser, kurstillfällen, deltagarbegränsning och procentuell Swish-handpenning.
+Ett lättviktigt WordPress-plugin för sammanhållna kurser, deltagarbegränsning och procentuell Swish-handpenning.
 
 ## Funktioner
 
 - Kurser med beskrivning och pris
-- Flera kurstillfällen med startdatum, starttid och valfri sluttid
-- Max antal deltagare per kurstillfälle
+- Ett bokningsbart startdatum per kurs med starttid och valfri sluttid
+- Flera efterföljande datum som automatiskt ingår i samma anmälan
+- Max antal deltagare per kurs
 - Anmälningsformulär och e-postbekräftelser
 - Uträknad Swish-handpenning med unik betalningsreferens
 - Administrativ betalningsmarkering
 - Automatiskt välkomstmail och avbokningsmail med redigerbara mallar
-- Manuella mailutskick till deltagarna på ett valt kurstillfälle
+- Manuella mailutskick till deltagarna på en vald kurs
 - Shortcodes: `[enkel_kurslista]` och `[enkel_kursdatumlista]`
 
 ## Installation
