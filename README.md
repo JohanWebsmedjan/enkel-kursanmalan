@@ -8,6 +8,8 @@ Ett lättviktigt WordPress-plugin för sammanhållna kurser, deltagarbegränsnin
 - Ett bokningsbart startdatum per kurs med starttid och valfri sluttid
 - Flera efterföljande datum som automatiskt ingår i samma anmälan
 - Max antal deltagare per kurs
+- Obligatoriskt namn, e-post och telefon för varje deltagare
+- Obligatorisk adress, postnummer och ort för den som anmäler
 - Anmälningsformulär och e-postbekräftelser
 - Uträknad Swish-handpenning med unik betalningsreferens
 - Administrativ betalningsmarkering

@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) exit;
 
 final class EKA_Plugin {
     const VERSION = '1.2.0';
-    const DB_VERSION = '1.2.0-single-course';
+    const DB_VERSION = '1.2.0-participant-details';
     const TABLE = 'eka_registrations';
 
     public static function init() {
@@ -55,6 +55,10 @@ final class EKA_Plugin {
             name varchar(191) NOT NULL,
             email varchar(191) NOT NULL,
             phone varchar(50) NOT NULL,
+            address varchar(191) NOT NULL DEFAULT '',
+            postal_code varchar(20) NOT NULL DEFAULT '',
+            city varchar(100) NOT NULL DEFAULT '',
+            attendee_data longtext NULL,
             participants smallint unsigned NOT NULL DEFAULT 1,
             total_amount decimal(10,2) NOT NULL DEFAULT 0,
             deposit_amount decimal(10,2) NOT NULL DEFAULT 0,
@@ -188,11 +192,11 @@ final class EKA_Plugin {
     public static function registrations_page() {
         global $wpdb;
         $rows = $wpdb->get_results("SELECT r.*, p.post_title FROM {$wpdb->prefix}" . self::TABLE . " r LEFT JOIN {$wpdb->posts} p ON p.ID=r.course_id ORDER BY r.created_at DESC LIMIT 500");
-        ?><div class="wrap"><h1>Anmälningar</h1><?php if (!empty($_GET['eka_notice'])): ?><div class="notice notice-success"><p><?php echo esc_html(sanitize_text_field(wp_unslash($_GET['eka_notice']))); ?></p></div><?php endif; ?><table class="widefat striped"><thead><tr><th>Datum</th><th>Kurs / tillfälle</th><th>Deltagare</th><th>Kontakt</th><th>Belopp</th><th>Swish-referens</th><th>Betalning</th><th>Anmälan</th></tr></thead><tbody>
+        ?><div class="wrap"><h1>Anmälningar</h1><?php if (!empty($_GET['eka_notice'])): ?><div class="notice notice-success"><p><?php echo esc_html(sanitize_text_field(wp_unslash($_GET['eka_notice']))); ?></p></div><?php endif; ?><table class="widefat striped"><thead><tr><th>Datum</th><th>Kurs / kursstart</th><th>Deltagare och kontakt</th><th>Adress</th><th>Belopp</th><th>Swish-referens</th><th>Betalning</th><th>Anmälan</th></tr></thead><tbody>
         <?php if (!$rows): ?><tr><td colspan="8">Inga anmälningar ännu.</td></tr><?php endif; ?>
         <?php foreach ($rows as $r): ?><tr>
         <td><?php echo esc_html($r->created_at); ?></td><td><strong><?php echo esc_html($r->post_title); ?></strong><br><?php echo esc_html(self::label_from_key($r->session_key)); ?></td>
-        <td><?php echo esc_html($r->name); ?> (<?php echo (int) $r->participants; ?>)</td><td><a href="mailto:<?php echo esc_attr($r->email); ?>"><?php echo esc_html($r->email); ?></a><br><?php echo esc_html($r->phone); ?></td>
+        <td><?php foreach(self::attendee_list($r) as $i=>$person): ?><strong><?php echo esc_html(($i+1).'. '.$person['name']); ?></strong><br><a href="mailto:<?php echo esc_attr($person['email']); ?>"><?php echo esc_html($person['email']); ?></a><br><?php echo esc_html($person['phone']); ?><br><?php endforeach; ?></td><td><?php echo esc_html($r->address); ?><br><?php echo esc_html(trim($r->postal_code.' '.$r->city)); ?></td>
         <td><?php echo esc_html(number_format_i18n($r->deposit_amount, 2)); ?> kr av <?php echo esc_html(number_format_i18n($r->total_amount, 2)); ?> kr</td><td><code><?php echo esc_html($r->payment_reference); ?></code></td>
         <td><?php echo $r->payment_status === 'paid' ? '<strong style="color:#087b37">Betald</strong>' : '<strong>Väntar</strong>'; ?><br>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"><input type="hidden" name="action" value="eka_payment_status"><input type="hidden" name="id" value="<?php echo (int) $r->id; ?>"><input type="hidden" name="status" value="<?php echo $r->payment_status === 'paid' ? 'pending' : 'paid'; ?>"><?php wp_nonce_field('eka_status_' . $r->id); ?><button class="button button-small"><?php echo $r->payment_status === 'paid' ? 'Ångra' : 'Markera betald'; ?></button></form></td>
@@ -232,9 +236,9 @@ final class EKA_Plugin {
         $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id=%d", $id));
         if (!$row || $row->registration_status === 'cancelled') wp_die('Anmälan hittades inte eller är redan avbokad.');
         $wpdb->update($table, ['registration_status'=>'cancelled'], ['id'=>$id], ['%s'], ['%d']);
-        $data = self::mail_data($row);
-        $mailed = wp_mail($row->email, self::render_template(get_option('eka_cancel_subject','Avbokning: {course}'),$data), self::render_template(get_option('eka_cancel_message',self::default_cancel_message()),$data));
-        $notice = $mailed ? 'Anmälan avbokades och avbokningsmail skickades.' : 'Anmälan avbokades, men mailet kunde inte skickas.';
+        $mailed=true; $sent_to=[];
+        foreach(self::attendee_list($row) as $person) { $key=strtolower($person['email']); if(isset($sent_to[$key])) continue; $sent_to[$key]=true; $data=self::mail_data($row,$person); if(!wp_mail($person['email'],self::render_template(get_option('eka_cancel_subject','Avbokning: {course}'),$data),self::render_template(get_option('eka_cancel_message',self::default_cancel_message()),$data))) $mailed=false; }
+        $notice = $mailed ? 'Anmälan avbokades och avbokningsmail skickades till deltagarna.' : 'Anmälan avbokades, men minst ett mail kunde inte skickas.';
         wp_safe_redirect(add_query_arg('eka_notice', $notice, admin_url('edit.php?post_type=eka_course&page=eka-registrations')));
         exit;
     }
@@ -249,8 +253,8 @@ final class EKA_Plugin {
         if (!$subject || !$message || get_post_type($course_id) !== 'eka_course') wp_die('Utskicket saknar giltigt innehåll.');
         global $wpdb;
         $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}" . self::TABLE . " WHERE course_id=%d AND session_key=%s AND registration_status='active' ORDER BY id",$course_id,$session));
-        $sent = 0;
-        foreach ($rows as $row) { $data=self::mail_data($row); if (wp_mail($row->email,self::render_template($subject,$data),self::render_template($message,$data))) $sent++; }
+        $sent = 0; $sent_to=[];
+        foreach ($rows as $row) foreach(self::attendee_list($row) as $person) { $key=strtolower($person['email']); if(isset($sent_to[$key])) continue; $sent_to[$key]=true; $data=self::mail_data($row,$person); if (wp_mail($person['email'],self::render_template($subject,$data),self::render_template($message,$data))) $sent++; }
         wp_safe_redirect(add_query_arg('sent',$sent,admin_url('edit.php?post_type=eka_course&page=eka-course-mail')));
         exit;
     }
@@ -265,13 +269,21 @@ final class EKA_Plugin {
 
     private static function render_template($template, $data) { return strtr($template, $data); }
 
-    private static function mail_data($row) {
-        return ['{name}'=>$row->name,'{course}'=>get_the_title($row->course_id),'{session}'=>self::label_from_key($row->session_key),'{all_dates}'=>implode("\n",self::course_schedule_labels($row->course_id)),'{participants}'=>(string)$row->participants,'{total}'=>number_format_i18n($row->total_amount,2),'{deposit}'=>number_format_i18n($row->deposit_amount,2),'{swish_number}'=>(string)get_option('eka_swish_number'),'{reference}'=>$row->payment_reference];
+    private static function attendee_list($row) {
+        $people=json_decode((string)($row->attendee_data ?? ''),true);
+        if(!is_array($people) || !$people) $people=[['name'=>$row->name,'email'=>$row->email,'phone'=>$row->phone]];
+        return array_values(array_filter($people,function($person){ return !empty($person['name']) && !empty($person['email']) && !empty($person['phone']); }));
+    }
+
+    private static function mail_data($row,$person=null) {
+        $person=$person ?: self::attendee_list($row)[0];
+        return ['{name}'=>$person['name'],'{course}'=>get_the_title($row->course_id),'{session}'=>self::label_from_key($row->session_key),'{all_dates}'=>implode("\n",self::course_schedule_labels($row->course_id)),'{participants}'=>(string)$row->participants,'{total}'=>number_format_i18n($row->total_amount,2),'{deposit}'=>number_format_i18n($row->deposit_amount,2),'{swish_number}'=>(string)get_option('eka_swish_number'),'{reference}'=>$row->payment_reference];
     }
 
     public static function assets() {
         wp_register_style('eka-style', plugins_url('assets/eka.css', __FILE__), [], self::VERSION);
         wp_enqueue_style('eka-style');
+        if (is_singular('eka_course')) wp_enqueue_script('eka-front',plugins_url('assets/eka-front.js',__FILE__),[],self::VERSION,true);
     }
 
     public static function admin_assets($hook) {
@@ -333,7 +345,9 @@ final class EKA_Plugin {
     }
     private static function recipient_count($course_id,$key) {
         global $wpdb;
-        return (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}" . self::TABLE . " WHERE course_id=%d AND session_key=%s AND registration_status='active'",$course_id,$key));
+        $rows=$wpdb->get_results($wpdb->prepare("SELECT name,email,phone,attendee_data FROM {$wpdb->prefix}" . self::TABLE . " WHERE course_id=%d AND session_key=%s AND registration_status='active'",$course_id,$key));
+        $emails=[]; foreach($rows as $row) foreach(self::attendee_list($row) as $person) $emails[strtolower($person['email'])]=true;
+        return count($emails);
     }
 
     public static function course_list_shortcode() {
@@ -367,8 +381,9 @@ final class EKA_Plugin {
         <?php $key=self::session_key($start); $left=max(0,(int)$start['max']-self::booked_count($course_id,$key)); ?>
         <input type="hidden" name="action" value="eka_register"><input type="hidden" name="course_id" value="<?php echo (int) $course_id; ?>"><input type="hidden" name="session" value="<?php echo esc_attr($key); ?>"><?php wp_nonce_field('eka_register_' . $course_id, 'eka_nonce'); ?>
         <p><strong><?php echo $left ? esc_html($left . ' platser kvar') : 'Fullbokad'; ?></strong></p>
-        <label>Namn<input name="name" autocomplete="name" required></label><label>E-post<input type="email" name="email" autocomplete="email" required></label><label>Telefon<input type="tel" name="phone" autocomplete="tel" required></label><label>Antal deltagare<input type="number" name="participants" value="1" min="1" max="20" required></label>
-        <label class="eka-check"><input type="checkbox" name="privacy" value="1" required> Jag godkänner att uppgifterna sparas för att hantera anmälan.</label>
+        <fieldset class="eka-person"><legend>Person 1 – den som anmäler</legend><label>Namn<input name="name" autocomplete="name" required></label><label>E-post<input type="email" name="email" autocomplete="email" required></label><label>Telefon<input type="tel" name="phone" autocomplete="tel" required></label><label>Adress<input name="address" autocomplete="street-address" required></label><label>Postnummer<input name="postal_code" autocomplete="postal-code" required></label><label>Ort<input name="city" autocomplete="address-level2" required></label></fieldset>
+        <label>Antal deltagare<input type="number" id="eka-participant-count" name="participants" value="1" min="1" max="20" required></label><div id="eka-additional-participants"></div><script type="text/template" id="eka-participant-template"><fieldset class="eka-person"><legend>Person __NUMBER__</legend><label>Namn<input name="additional[__INDEX__][name]" required></label><label>E-post<input type="email" name="additional[__INDEX__][email]" required></label><label>Telefon<input type="tel" name="additional[__INDEX__][phone]" required></label></fieldset></script><noscript><p>JavaScript behöver vara aktiverat för anmälan av fler än en deltagare.</p></noscript>
+        <label class="eka-check"><input type="checkbox" name="privacy" value="1" required> Jag godkänner att uppgifterna sparas för att hantera anmälan och intygar att jag får lämna övriga deltagares kontaktuppgifter.</label>
         <button class="eka-button" type="submit" <?php disabled($left,0); ?>><?php echo $left ? 'Anmäl till hela kursen' : 'Kursen är fullbokad'; ?></button></form><?php endif; ?></section>
         <?php return $content . ob_get_clean();
     }
@@ -382,24 +397,35 @@ final class EKA_Plugin {
         foreach (self::sessions($course_id) as $candidate) if (hash_equals(self::session_key($candidate), $session)) { $selected = $candidate; break; }
         if (!$selected) wp_die('Kursstarten är inte giltig.');
         $name = sanitize_text_field(wp_unslash($_POST['name'] ?? '')); $email = sanitize_email(wp_unslash($_POST['email'] ?? '')); $phone = sanitize_text_field(wp_unslash($_POST['phone'] ?? ''));
+        $address=sanitize_text_field(wp_unslash($_POST['address'] ?? '')); $postal_code=sanitize_text_field(wp_unslash($_POST['postal_code'] ?? '')); $city=sanitize_text_field(wp_unslash($_POST['city'] ?? ''));
         $participants = min(20, max(1, absint($_POST['participants'] ?? 1)));
-        if (!$name || !is_email($email) || !$phone) wp_die('Kontrollera kontaktuppgifterna.');
+        if (!$name || !is_email($email) || !$phone || !$address || !$postal_code || !$city) wp_die('Kontrollera kontakt- och adressuppgifterna. Alla fält är obligatoriska.');
+        $attendees=[['name'=>$name,'email'=>$email,'phone'=>$phone]];
+        $additional=array_values((array)($_POST['additional'] ?? []));
+        for($i=0;$i<$participants-1;$i++) {
+            $person=(array)($additional[$i] ?? []);
+            $person_name=sanitize_text_field(wp_unslash($person['name'] ?? ''));
+            $person_email=sanitize_email(wp_unslash($person['email'] ?? ''));
+            $person_phone=sanitize_text_field(wp_unslash($person['phone'] ?? ''));
+            if(!$person_name || !is_email($person_email) || !$person_phone) wp_die('Namn, e-post och telefon måste anges för samtliga deltagare.');
+            $attendees[]=['name'=>$person_name,'email'=>$person_email,'phone'=>$person_phone];
+        }
         $available = max(0, (int) $selected['max'] - self::booked_count($course_id, $session));
         if ($participants > $available) wp_die('Det finns inte tillräckligt många platser kvar på kursen.');
         $price = (float) get_post_meta($course_id, '_eka_price', true); $total = round($price * $participants, 2);
         $percent = min(100, max(0, (float) get_option('eka_deposit_percent', 20))); $deposit = round($total * $percent / 100, 2);
         $reference = 'KURS-' . strtoupper(wp_generate_password(8, false, false));
         global $wpdb;
-        $ok = $wpdb->insert($wpdb->prefix . self::TABLE, ['course_id'=>$course_id,'session_key'=>$session,'name'=>$name,'email'=>$email,'phone'=>$phone,'participants'=>$participants,'total_amount'=>$total,'deposit_amount'=>$deposit,'payment_reference'=>$reference,'payment_status'=>'pending','registration_status'=>'active','created_at'=>current_time('mysql')], ['%d','%s','%s','%s','%s','%d','%f','%f','%s','%s','%s','%s']);
+        $ok = $wpdb->insert($wpdb->prefix . self::TABLE, ['course_id'=>$course_id,'session_key'=>$session,'name'=>$name,'email'=>$email,'phone'=>$phone,'address'=>$address,'postal_code'=>$postal_code,'city'=>$city,'attendee_data'=>wp_json_encode($attendees),'participants'=>$participants,'total_amount'=>$total,'deposit_amount'=>$deposit,'payment_reference'=>$reference,'payment_status'=>'pending','registration_status'=>'active','created_at'=>current_time('mysql')], ['%d','%s','%s','%s','%s','%s','%s','%s','%s','%d','%f','%f','%s','%s','%s','%s']);
         if (!$ok) wp_die('Anmälan kunde inte sparas. Försök igen.');
         $title = get_the_title($course_id);
         $session_label = self::session_label($selected);
         $all_dates=implode("\n",self::course_schedule_labels($course_id));
-        $message = "Ny kursanmälan\n\nKurs: $title\nKursstart: $session_label\nAlla datum:\n$all_dates\n\nNamn: $name\nE-post: $email\nTelefon: $phone\nDeltagare: $participants\nHandpenning: " . number_format_i18n($deposit, 2) . " kr\nSwish-referens: $reference";
+        $attendee_lines=[]; foreach($attendees as $i=>$person) $attendee_lines[]='Person '.($i+1).': '.$person['name'].', '.$person['email'].', '.$person['phone'];
+        $message = "Ny kursanmälan\n\nKurs: $title\nKursstart: $session_label\nAlla datum:\n$all_dates\n\n".implode("\n",$attendee_lines)."\nAdress för den som anmäler: $address, $postal_code $city\nDeltagare: $participants\nHandpenning: " . number_format_i18n($deposit, 2) . " kr\nSwish-referens: $reference";
         wp_mail(get_option('eka_admin_email', get_option('admin_email')), 'Ny kursanmälan: ' . $title, $message);
-        $mail_row=(object)['name'=>$name,'course_id'=>$course_id,'session_key'=>$session,'participants'=>$participants,'total_amount'=>$total,'deposit_amount'=>$deposit,'payment_reference'=>$reference];
-        $mail_data=self::mail_data($mail_row);
-        wp_mail($email,self::render_template(get_option('eka_welcome_subject','Välkommen till {course}'),$mail_data),self::render_template(get_option('eka_welcome_message',self::default_welcome_message()),$mail_data));
+        $mail_row=(object)['name'=>$name,'email'=>$email,'phone'=>$phone,'course_id'=>$course_id,'session_key'=>$session,'participants'=>$participants,'total_amount'=>$total,'deposit_amount'=>$deposit,'payment_reference'=>$reference,'attendee_data'=>wp_json_encode($attendees)];
+        $welcome_sent=[]; foreach($attendees as $person) { $email_key=strtolower($person['email']); if(isset($welcome_sent[$email_key])) continue; $welcome_sent[$email_key]=true; $mail_data=self::mail_data($mail_row,$person); wp_mail($person['email'],self::render_template(get_option('eka_welcome_subject','Välkommen till {course}'),$mail_data),self::render_template(get_option('eka_welcome_message',self::default_welcome_message()),$mail_data)); }
         $url = add_query_arg(['eka_thanks'=>1,'ref'=>$reference], get_permalink($course_id));
         wp_safe_redirect($url); exit;
     }

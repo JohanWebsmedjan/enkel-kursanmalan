@@ -20,6 +20,8 @@ Utvecklas och underhålls av Websmedjan: https://github.com/JohanWebsmedjan
 
 Varje kurs har ett enda bokningsbart startdatum, starttid, valfri sluttid och ett maxantal deltagare. Ytterligare datum kan läggas till som delar av samma kurs. En anmälan gäller automatiskt hela kursserien och alla datum som ingår.
 
+Den som gör anmälan anger obligatoriskt namn, e-post, telefon, adress, postnummer och ort. Vid anmälan av flera deltagare krävs namn, e-post och telefon för varje ytterligare person.
+
 == Betalningsflöde ==
 Efter anmälan visas Swish-nummer, uträknad handpenning och en unik referens. Administratören markerar betalningen som mottagen under Kurser > Anmälningar. Automatisk verifiering ingår inte i denna version.
 
@@ -32,6 +34,7 @@ Välkomstmail skickas automatiskt vid anmälan. När administratören avbokar en
 * Avbokning av anmälan frigör platser och skickar avbokningsmail.
 * Manuella individuella utskick per kurs.
 * En kurs har ett startdatum och kan innehålla flera efterföljande datum i samma anmälan.
+* Separata obligatoriska kontaktuppgifter för samtliga deltagare samt adressuppgifter för den som anmäler.
 
 = 1.1.0 =
 * Kurstillfällen med datum, tider och max antal deltagare.
