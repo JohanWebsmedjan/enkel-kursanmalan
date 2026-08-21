@@ -331,7 +331,7 @@ final class EKA_Plugin {
 
     private static function session_key($s) { return $s['date'] . '|' . $s['start'] . '|' . ($s['end'] ?? ''); }
     private static function session_label($s) {
-        $date = wp_date(get_option('date_format'), strtotime($s['date']));
+        $date = wp_date('Y-m-d', strtotime($s['date']));
         return $date . ' kl. ' . $s['start'] . (!empty($s['end']) ? '–' . $s['end'] : '');
     }
     private static function label_from_key($key) {
@@ -365,7 +365,7 @@ final class EKA_Plugin {
         }} wp_reset_postdata();
         usort($items, function($a,$b){ return strcmp($a['sort'],$b['sort']); });
         ob_start(); ?><div class="eka-date-list"><?php foreach ($items as $item): ?>
-        <a class="eka-date-item" href="<?php echo esc_url($item['url']); ?>"><span class="eka-calendar-icon" aria-hidden="true"><span></span></span><span><strong><?php echo esc_html(wp_date(get_option('date_format'), strtotime($item['date']))); ?>, <?php echo esc_html($item['start']); ?></strong><small><?php echo esc_html($item['title']); ?></small></span></a>
+        <a class="eka-date-item" href="<?php echo esc_url($item['url']); ?>"><span class="eka-calendar-icon" aria-hidden="true"><span></span></span><span><strong><?php echo esc_html(wp_date('Y-m-d', strtotime($item['date']))); ?>, <?php echo esc_html($item['start']); ?></strong><small><?php echo esc_html($item['title']); ?></small></span></a>
         <?php endforeach; ?></div><?php return ob_get_clean();
     }
 

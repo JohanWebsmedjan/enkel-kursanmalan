@@ -35,6 +35,7 @@ Välkomstmail skickas automatiskt vid anmälan. När administratören avbokar en
 * Manuella individuella utskick per kurs.
 * En kurs har ett startdatum och kan innehålla flera efterföljande datum i samma anmälan.
 * Separata obligatoriska kontaktuppgifter för samtliga deltagare samt adressuppgifter för den som anmäler.
+* Alla kursdatum visas i formatet YYYY-MM-DD.
 
 = 1.1.0 =
 * Kurstillfällen med datum, tider och max antal deltagare.
