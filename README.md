@@ -10,6 +10,8 @@ Ett lättviktigt WordPress-plugin för kurser, kurstillfällen, deltagarbegräns
 - Anmälningsformulär och e-postbekräftelser
 - Uträknad Swish-handpenning med unik betalningsreferens
 - Administrativ betalningsmarkering
+- Automatiskt välkomstmail och avbokningsmail med redigerbara mallar
+- Manuella mailutskick till deltagarna på ett valt kurstillfälle
 - Shortcodes: `[enkel_kurslista]` och `[enkel_kursdatumlista]`
 
 ## Installation

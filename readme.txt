@@ -2,7 +2,7 @@
 Contributors: JohanWebsmedjan
 Requires at least: 6.2
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,3 +22,15 @@ Varje kurstillfälle har startdatum, starttid, valfri sluttid och max antal delt
 
 == Betalningsflöde ==
 Efter anmälan visas Swish-nummer, uträknad handpenning och en unik referens. Administratören markerar betalningen som mottagen under Kurser > Anmälningar. Automatisk verifiering ingår inte i denna version.
+
+== E-post ==
+Välkomstmail skickas automatiskt vid anmälan. När administratören avbokar en anmälan skickas ett automatiskt avbokningsmail. Mallarna redigeras under Kurser > Inställningar. Under Kurser > Kursmail kan administratören skicka ett separat mail till alla aktiva anmälningar för ett valt kurstillfälle.
+
+== Changelog ==
+= 1.2.0 =
+* Redigerbara mallar för välkomst- och avbokningsmail.
+* Avbokning av anmälan frigör platser och skickar avbokningsmail.
+* Manuella individuella utskick per kurstillfälle.
+
+= 1.1.0 =
+* Kurstillfällen med datum, tider och max antal deltagare.
