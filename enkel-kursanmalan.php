@@ -183,6 +183,15 @@ final class EKA_Plugin {
         return $sessions;
     }
 
+    /** Kurstillfällen som ännu inte har startat, enligt webbplatsens tidszon. */
+    private static function upcoming_sessions($course_id) {
+        $now = new DateTimeImmutable('now', wp_timezone());
+        return array_values(array_filter(self::sessions($course_id), function($s) use ($now) {
+            $start = DateTimeImmutable::createFromFormat('Y-m-d H:i', $s['date'] . ' ' . $s['start'], wp_timezone());
+            return $start && $start > $now;
+        }));
+    }
+
     private static function session_key($s) { return $s['date'] . '|' . $s['start'] . '|' . ($s['end'] ?? ''); }
     private static function session_label($s) {
         $date = wp_date(get_option('date_format'), strtotime($s['date']));
@@ -203,18 +212,18 @@ final class EKA_Plugin {
     public static function course_date_list_shortcode() {
         $q = new WP_Query(['post_type'=>'eka_course','posts_per_page'=>-1,'post_status'=>'publish','orderby'=>'title','order'=>'ASC']);
         $items = [];
-        while ($q->have_posts()) { $q->the_post(); foreach (self::sessions(get_the_ID()) as $s) {
+        while ($q->have_posts()) { $q->the_post(); foreach (self::upcoming_sessions(get_the_ID()) as $s) {
             $items[] = ['sort'=>$s['date'].' '.$s['start'], 'date'=>$s['date'], 'start'=>$s['start'], 'title'=>get_the_title(), 'url'=>get_permalink()];
         }} wp_reset_postdata();
         usort($items, function($a,$b){ return strcmp($a['sort'],$b['sort']); });
-        ob_start(); ?><div class="eka-date-list"><?php foreach ($items as $item): ?>
+        ob_start(); ?><div class="eka-date-list"><?php if (!$items): ?><p>Det finns inga kommande kurstillfällen just nu.</p><?php endif; ?><?php foreach ($items as $item): ?>
         <a class="eka-date-item" href="<?php echo esc_url($item['url']); ?>"><span class="eka-calendar-icon" aria-hidden="true"><span></span></span><span><strong><?php echo esc_html(wp_date(get_option('date_format'), strtotime($item['date']))); ?>, <?php echo esc_html($item['start']); ?></strong><small><?php echo esc_html($item['title']); ?></small></span></a>
         <?php endforeach; ?></div><?php return ob_get_clean();
     }
 
     public static function append_course_form($content) {
         if (!is_singular('eka_course') || !in_the_loop() || !is_main_query()) return $content;
-        $course_id = get_the_ID(); $price = (float) get_post_meta($course_id, '_eka_price', true); $sessions = self::sessions($course_id);
+        $course_id = get_the_ID(); $price = (float) get_post_meta($course_id, '_eka_price', true); $sessions = self::upcoming_sessions($course_id);
         ob_start(); ?>
         <section class="eka-registration"><h2>Anmälan</h2><p><strong>Kostnad:</strong> <?php echo esc_html(number_format_i18n($price, 2)); ?> kr per deltagare</p>
         <?php if (!$sessions): ?><p>Det finns inga bokningsbara kurstillfällen just nu.</p><?php else: ?>
@@ -233,8 +242,8 @@ final class EKA_Plugin {
         if (empty($_POST['privacy'])) wp_die('Du måste godkänna hanteringen av personuppgifter.');
         $session = sanitize_text_field(wp_unslash($_POST['session'] ?? ''));
         $selected = null;
-        foreach (self::sessions($course_id) as $candidate) if (hash_equals(self::session_key($candidate), $session)) { $selected = $candidate; break; }
-        if (!$selected) wp_die('Kurstillfället är inte giltigt.');
+        foreach (self::upcoming_sessions($course_id) as $candidate) if (hash_equals(self::session_key($candidate), $session)) { $selected = $candidate; break; }
+        if (!$selected) wp_die('Kurstillfället är inte giltigt eller har redan startat.');
         $name = sanitize_text_field(wp_unslash($_POST['name'] ?? '')); $email = sanitize_email(wp_unslash($_POST['email'] ?? '')); $phone = sanitize_text_field(wp_unslash($_POST['phone'] ?? ''));
         $participants = min(20, max(1, absint($_POST['participants'] ?? 1)));
         if (!$name || !is_email($email) || !$phone) wp_die('Kontrollera kontaktuppgifterna.');
