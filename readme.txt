@@ -33,5 +33,8 @@ Under Kurser > Anmälningar väljer man en kurs och får:
 * Utskick till anmälda, till kursens maillista eller till dem som vill ha information om kommande kurser.
 * Kursens maillista med export. Alla anmälda läggs till; samtycke till information om kommande kurser är frivilligt.
 
+== Nyhetsbrev ==
+Om The Newsletter Plugin är installerat väljer man en lista under Kurser > Inställningar. Den som kryssar i "Jag vill gärna få information om kommande kurser" läggs då automatiskt i listan som bekräftad prenumerant. Befintliga prenumeranter med samtycke kan föras över med en knapp på samma sida.
+
 == Betalningsflöde ==
 Efter anmälan visas belopp, Swish-nummer, unik referens, en knapp som öppnar Swish och en QR-kod. Betalningen markeras som mottagen i kursens anmälningslista. Automatisk verifiering ingår inte.

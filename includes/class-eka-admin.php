@@ -49,6 +49,7 @@ final class EKA_Admin {
         register_setting('eka_settings', 'eka_admin_email', ['sanitize_callback' => 'sanitize_email']);
         register_setting('eka_settings', 'eka_welcome_subject', ['sanitize_callback' => 'sanitize_text_field']);
         register_setting('eka_settings', 'eka_welcome_body', ['sanitize_callback' => 'wp_kses_post']);
+        register_setting('eka_settings', 'eka_tnp_list', ['sanitize_callback' => 'absint']);
     }
 
     public static function settings_page() { ?>
@@ -71,7 +72,9 @@ final class EKA_Admin {
             <?php EKA_Mailer::placeholder_help(); ?>
         </td></tr>
         </table>
+        <?php EKA_Newsletter::settings_fields(); ?>
         <?php submit_button(); ?></form>
+        <?php EKA_Newsletter::sync_form(); ?>
         <h2>Shortcodes</h2>
         <p><code>[enkel_kurslista]</code> visar kurskort. <code>[enkel_kursdatumlista]</code> visar kommande kurstillfällen i datumordning.<br>
         Båda kan begränsas till en kategori: <code>[enkel_kurslista kategori="slug"]</code>.</p>

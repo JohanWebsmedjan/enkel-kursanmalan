@@ -177,7 +177,9 @@ final class EKA_Frontend {
         EKA_Core::unlock_session($course_id, $session);
         if (!$ok) self::fail('Anmälan kunde inte sparas. Försök igen.');
 
-        EKA_Core::subscribe($course_id, $email, $name, !empty($_POST['newsletter']));
+        $wants_newsletter = !empty($_POST['newsletter']);
+        EKA_Core::subscribe($course_id, $email, $name, $wants_newsletter);
+        do_action('eka_after_registration', $course_id, $reg, $wants_newsletter);
         EKA_Mailer::send_welcome($course_id, $reg, $people);
         EKA_Mailer::notify_responsible($course_id, $reg, $people);
 
