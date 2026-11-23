@@ -1,0 +1,44 @@
+# Bygger plugin-ZIP och skapar en GitHub-release när en versionstagg (t.ex. v2.1.0) pushas.
+# Installerade webbplatser hittar sedan uppdateringen via pluginets inbyggda uppdaterare.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Kontrollera att versionsnumren stämmer med taggen
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          HEADER=$(grep -m1 -E '^\s*\*\s*Version:' enkel-kursanmalan.php | sed -E 's/.*Version:\s*//; s/\s*$//')
+          CONST=$(grep -m1 -E "define\('EKA_VERSION'" enkel-kursanmalan.php | sed -E "s/.*'EKA_VERSION',\s*'([^']+)'.*/\1/")
+          STABLE=$(grep -m1 -E '^Stable tag:' readme.txt | sed -E 's/Stable tag:\s*//; s/\s*$//')
+          echo "Tagg: $TAG, huvud: $HEADER, EKA_VERSION: $CONST, Stable tag: $STABLE"
+          if [ "$TAG" != "$HEADER" ] || [ "$TAG" != "$CONST" ] || [ "$TAG" != "$STABLE" ]; then
+            echo "::error::Versionsnumret i enkel-kursanmalan.php och readme.txt måste vara $TAG"
+            exit 1
+          fi
+
+      - name: Kontrollera PHP-syntax
+        run: for f in enkel-kursanmalan.php includes/*.php; do php -l "$f"; done
+
+      - name: Bygg ZIP
+        run: |
+          git archive --format=zip --prefix=enkel-kursanmalan/ -o "enkel-kursanmalan-${GITHUB_REF_NAME}.zip" HEAD
+          unzip -l "enkel-kursanmalan-${GITHUB_REF_NAME}.zip"
+
+      - name: Skapa release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "enkel-kursanmalan-${GITHUB_REF_NAME}.zip" \
+            --title "Enkel kursanmälan ${GITHUB_REF_NAME#v}" \
+            --generate-notes
