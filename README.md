@@ -12,6 +12,7 @@ Ett WordPress-plugin för kurser där varje kurs sköts separat: egen anmälning
 - Valbart krav på personnummer per deltagare, sparat krypterat
 - Per kurs i admin: anmälningslista, CSV-export, avbokning, utskick och maillista med avregistreringslänk
 - Swish-länk och QR-kod på tacksidan
+- Valfri koppling till The Newsletter Plugin: den som vill ha information om kommande kurser läggs automatiskt i vald nyhetsbrevslista
 - Shortcodes: `[enkel_kurslista]` och `[enkel_kursdatumlista]`, båda med `kategori="slug"`
 
 ## Kodstruktur
@@ -24,6 +25,7 @@ Ett WordPress-plugin för kurser där varje kurs sköts separat: egen anmälning
 | `includes/class-eka-mailer.php` | Välkomstmail, avisering och kortkoder |
 | `includes/class-eka-admin.php` | Översikt, kurssida, utskick, maillista, inställningar |
 | `includes/class-eka-frontend.php` | Kurssida, anmälan, tacksida, avregistrering |
+| `includes/class-eka-newsletter.php` | Koppling till The Newsletter Plugin |
 
 ## Installation
 
