@@ -27,6 +27,7 @@ require_once EKA_DIR . 'includes/class-eka-courses.php';
 require_once EKA_DIR . 'includes/class-eka-mailer.php';
 require_once EKA_DIR . 'includes/class-eka-admin.php';
 require_once EKA_DIR . 'includes/class-eka-frontend.php';
+require_once EKA_DIR . 'includes/class-eka-updater.php';
 
 register_activation_hook(__FILE__, function() {
     EKA_DB::install();
@@ -40,3 +41,4 @@ EKA_Core::init();
 EKA_Courses::init();
 EKA_Admin::init();
 EKA_Frontend::init();
+EKA_Updater::init();
