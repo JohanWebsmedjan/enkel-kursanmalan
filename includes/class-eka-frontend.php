@@ -30,23 +30,47 @@ final class EKA_Frontend {
 
     /* ---------------- Shortcodes ---------------- */
 
+    /**
+     * [enkel_kurslista]: en rad per kurs med nästa kurstillfälle och pris.
+     * Samma utseende som datumlistan, så båda listorna ser likadana ut.
+     */
     public static function course_list_shortcode($atts) {
         $q = self::course_query($atts);
-        ob_start(); ?><div class="eka-grid"><?php while ($q->have_posts()): $q->the_post(); $price = (float) get_post_meta(get_the_ID(), '_eka_price', true); ?>
-        <article class="eka-card"><?php if (has_post_thumbnail()) the_post_thumbnail('medium_large'); ?><div class="eka-card-body"><h2><?php the_title(); ?></h2><div><?php echo esc_html(wp_trim_words(get_the_excerpt(), 30)); ?></div><p><strong><?php echo esc_html(EKA_Core::money($price)); ?> kr</strong></p><a class="eka-button" href="<?php the_permalink(); ?>">Läs mer och anmäl dig</a></div></article>
-        <?php endwhile; wp_reset_postdata(); ?></div><?php return ob_get_clean();
+        $items = [];
+        while ($q->have_posts()) { $q->the_post();
+            $next = EKA_Core::upcoming_sessions(get_the_ID())[0] ?? null;
+            $price = (float) get_post_meta(get_the_ID(), '_eka_price', true);
+            $details = $next ? 'Nästa tillfälle: ' . self::date_time($next) : 'Inga kommande tillfällen';
+            if ($price > 0) $details .= ' · ' . EKA_Core::money($price) . ' kr';
+            $items[] = ['url' => get_permalink(), 'heading' => get_the_title(), 'details' => $details];
+        } wp_reset_postdata();
+        return self::list_html($items, 'Det finns inga kurser just nu.');
     }
 
+    /** [enkel_kursdatumlista]: en rad per kommande kurstillfälle, i datumordning. */
     public static function course_date_list_shortcode($atts) {
         $q = self::course_query($atts);
         $items = [];
         while ($q->have_posts()) { $q->the_post(); foreach (EKA_Core::upcoming_sessions(get_the_ID()) as $s) {
-            $items[] = ['sort' => EKA_Core::session_start($s)->getTimestamp(), 'date' => $s['date'], 'start' => $s['start'], 'title' => get_the_title(), 'url' => get_permalink()];
+            $items[] = ['sort' => EKA_Core::session_start($s)->getTimestamp(), 'url' => get_permalink(), 'heading' => self::date_time($s), 'details' => get_the_title()];
         }} wp_reset_postdata();
-        usort($items, function($a, $b) { return $a['sort'] <=> $b['sort'] ?: strcmp($a['title'], $b['title']); });
-        ob_start(); ?><div class="eka-date-list"><?php if (!$items): ?><p>Det finns inga kommande kurstillfällen just nu.</p><?php endif; ?><?php foreach ($items as $item): ?>
-        <a class="eka-date-item" href="<?php echo esc_url($item['url']); ?>"><span class="eka-calendar-icon" aria-hidden="true"><span></span></span><span><strong><?php echo esc_html(wp_date(get_option('date_format'), strtotime($item['date']))); ?>, <?php echo esc_html($item['start']); ?></strong><small><?php echo esc_html($item['title']); ?></small></span></a>
-        <?php endforeach; ?></div><?php return ob_get_clean();
+        usort($items, function($a, $b) { return $a['sort'] <=> $b['sort'] ?: strcmp($a['details'], $b['details']); });
+        return self::list_html($items, 'Det finns inga kommande kurstillfällen just nu.');
+    }
+
+    private static function date_time($session) {
+        return wp_date(get_option('date_format'), strtotime($session['date'])) . ', ' . $session['start'];
+    }
+
+    /** Gemensam layout för kurslistorna: ruta med kalenderikon, fet rad och en rad under. */
+    private static function list_html($items, $empty) {
+        $html = '<div class="eka-date-list">';
+        if (!$items) $html .= '<p>' . esc_html($empty) . '</p>';
+        foreach ($items as $item) {
+            $html .= '<a class="eka-date-item" href="' . esc_url($item['url']) . '"><span class="eka-calendar-icon" aria-hidden="true"><span></span></span>'
+                . '<span><strong>' . esc_html($item['heading']) . '</strong><small>' . esc_html($item['details']) . '</small></span></a>';
+        }
+        return $html . '</div>';
     }
 
     /* ---------------- Kurssidan ---------------- */

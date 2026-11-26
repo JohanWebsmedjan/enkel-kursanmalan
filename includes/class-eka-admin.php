@@ -83,7 +83,7 @@ final class EKA_Admin {
         <?php submit_button(); ?></form>
         <?php EKA_Newsletter::sync_form(); ?>
         <h2>Shortcodes</h2>
-        <p><code>[enkel_kurslista]</code> visar kurskort. <code>[enkel_kursdatumlista]</code> visar kommande kurstillfällen i datumordning.<br>
+        <p><code>[enkel_kurslista]</code> visar en rad per kurs med nästa tillfälle och pris. <code>[enkel_kursdatumlista]</code> visar en rad per kommande kurstillfälle i datumordning. Båda har samma utseende.<br>
         Båda kan begränsas till en kategori: <code>[enkel_kurslista kategori="slug"]</code>.</p>
         <p><code>[enkel_kurs]</code> används på visningssidan och visar kursens beskrivning, samarbetspartner, informationssidor och anmälningsformulär.<br>
         Delarna kan placeras var för sig med <code>del</code>: <code>titel</code>, <code>bild</code>, <code>beskrivning</code>, <code>utdrag</code>, <code>pris</code>, <code>tillfallen</code>, <code>partners</code>, <code>information</code> och <code>formular</code>, till exempel <code>[enkel_kurs del="bild,pris"]</code>.<br>
