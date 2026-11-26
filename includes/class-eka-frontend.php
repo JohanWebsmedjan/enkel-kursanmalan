@@ -54,10 +54,11 @@ final class EKA_Frontend {
     public static function course_content($content) {
         if (!is_singular('eka_course') || !in_the_loop() || !is_main_query()) return $content;
         $course_id = get_the_ID();
+        if (EKA_Display::page_for($course_id)) return $content; // visningssidan placerar delarna med [enkel_kurs]
         return $content . self::partners_html($course_id) . self::info_pages_html($course_id) . self::form_html($course_id);
     }
 
-    private static function partners_html($course_id) {
+    public static function partners_html($course_id) {
         $partners = EKA_Core::partners($course_id);
         if (!$partners) return '';
         $html = '<section class="eka-partners"><h2>I samarbete med</h2><ul>';
@@ -69,7 +70,7 @@ final class EKA_Frontend {
         return $html . '</ul></section>';
     }
 
-    private static function info_pages_html($course_id) {
+    public static function info_pages_html($course_id) {
         $links = EKA_Core::info_pages($course_id);
         if (!$links) return '';
         $html = '<section class="eka-info-pages"><h2>Bra att veta</h2><ul>';
@@ -84,7 +85,7 @@ final class EKA_Frontend {
         </fieldset>
     <?php }
 
-    private static function form_html($course_id) {
+    public static function form_html($course_id) {
         $price = (float) get_post_meta($course_id, '_eka_price', true);
         $sessions = EKA_Core::upcoming_sessions($course_id);
         $percent = EKA_Core::deposit_percent($course_id);
@@ -201,10 +202,17 @@ final class EKA_Frontend {
 
     public static function thanks_box($content) {
         if (!is_singular('eka_course') || empty($_GET['eka_thanks']) || !in_the_loop() || !is_main_query()) return $content;
+        if (EKA_Display::page_for(get_the_ID())) return $content; // visas av [enkel_kurs] på visningssidan
+        return self::thanks_html(get_the_ID()) . $content;
+    }
+
+    /** Tackrutan med Swish efter en anmälan, eller tom sträng om sidan inte öppnats från en anmälan. */
+    public static function thanks_html($course_id) {
+        if (empty($_GET['eka_thanks'])) return '';
         $ref = sanitize_text_field(wp_unslash($_GET['ref'] ?? ''));
         global $wpdb;
-        $reg = $wpdb->get_row($wpdb->prepare('SELECT deposit_amount, total_amount FROM ' . EKA_DB::table('registrations') . ' WHERE payment_reference=%s AND course_id=%d', $ref, get_the_ID()));
-        if (!$reg) return $content;
+        $reg = $wpdb->get_row($wpdb->prepare('SELECT deposit_amount, total_amount FROM ' . EKA_DB::table('registrations') . ' WHERE payment_reference=%s AND course_id=%d', $ref, $course_id));
+        if (!$reg) return '';
         $amount = (float) $reg->deposit_amount;
         $full = $amount >= (float) $reg->total_amount;
         $swish = (string) get_option('eka_swish_number');
@@ -220,7 +228,7 @@ final class EKA_Frontend {
             $box .= '</div>';
         }
         $box .= '<p>En bekräftelse har skickats via e-post.</p></div>';
-        return $box . $content;
+        return $box;
     }
 
     /** Länk som öppnar Swish-appen med mottagare, belopp och meddelande ifyllda. */

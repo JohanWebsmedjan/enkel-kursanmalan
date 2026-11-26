@@ -50,11 +50,18 @@ final class EKA_Admin {
         register_setting('eka_settings', 'eka_welcome_subject', ['sanitize_callback' => 'sanitize_text_field']);
         register_setting('eka_settings', 'eka_welcome_body', ['sanitize_callback' => 'wp_kses_post']);
         register_setting('eka_settings', 'eka_tnp_list', ['sanitize_callback' => 'absint']);
+        register_setting('eka_settings', EKA_Display::OPTION, ['sanitize_callback' => 'absint']);
     }
 
     public static function settings_page() { ?>
         <div class="wrap"><h1>Inställningar för kursanmälan</h1><form method="post" action="options.php">
         <?php settings_fields('eka_settings'); ?>
+        <h2>Kurssidor</h2>
+        <table class="form-table">
+        <tr><th><label for="<?php echo esc_attr(EKA_Display::OPTION); ?>">Visningssida</label></th><td>
+            <?php echo EKA_Display::page_dropdown(EKA_Display::OPTION, get_option(EKA_Display::OPTION, 0), '– Ingen, använd temats mall för kurser –'); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+            <p class="description">En vanlig sida som används som mall när en kurs öppnas. Sätt <code>[enkel_kurs]</code> där kursen ska visas. Kurserna behåller sina egna adresser. En kategori kan ha en egen visningssida.</p></td></tr>
+        </table>
         <h2>Betalning</h2>
         <table class="form-table">
         <tr><th><label for="eka_swish_number">Swish-nummer</label></th><td><input class="regular-text" id="eka_swish_number" name="eka_swish_number" value="<?php echo esc_attr(get_option('eka_swish_number')); ?>" required></td></tr>
@@ -78,6 +85,9 @@ final class EKA_Admin {
         <h2>Shortcodes</h2>
         <p><code>[enkel_kurslista]</code> visar kurskort. <code>[enkel_kursdatumlista]</code> visar kommande kurstillfällen i datumordning.<br>
         Båda kan begränsas till en kategori: <code>[enkel_kurslista kategori="slug"]</code>.</p>
+        <p><code>[enkel_kurs]</code> används på visningssidan och visar kursens beskrivning, samarbetspartner, informationssidor och anmälningsformulär.<br>
+        Delarna kan placeras var för sig med <code>del</code>: <code>titel</code>, <code>bild</code>, <code>beskrivning</code>, <code>utdrag</code>, <code>pris</code>, <code>tillfallen</code>, <code>partners</code>, <code>information</code> och <code>formular</code>, till exempel <code>[enkel_kurs del="bild,pris"]</code>.<br>
+        På en annan sida kan en viss kurs visas med <code>[enkel_kurs id="123"]</code>.</p>
         <h2>Personnummer</h2>
         <p>Personnummer sparas krypterat i databasen. Nyckeln hämtas från <code>EKA_ENCRYPTION_KEY</code> i <code>wp-config.php</code> om den finns, annars från webbplatsens säkerhetsnycklar (<code>AUTH_KEY</code>, <code>SECURE_AUTH_KEY</code>).
         Byts nyckeln går redan sparade personnummer inte längre att läsa. Status: <strong><?php echo defined('EKA_ENCRYPTION_KEY') ? 'egen nyckel används' : 'webbplatsens säkerhetsnycklar används'; ?></strong>.</p>

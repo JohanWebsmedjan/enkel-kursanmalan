@@ -50,6 +50,9 @@ final class EKA_Courses {
         <div class="form-field"><label for="eka_deposit_percent">Föranmälningsavgift (%)</label>
         <input type="number" min="0" max="100" step="0.1" name="eka_deposit_percent" id="eka_deposit_percent" value="">
         <p>Andel av kurskostnaden som betalas vid anmälan. 100 = hela beloppet direkt. Lämna tomt för standardvärdet i inställningarna (<?php echo esc_html(get_option('eka_deposit_percent', 20)); ?> %).</p></div>
+        <div class="form-field"><label for="eka_display_page">Visningssida</label>
+        <?php echo EKA_Display::page_dropdown('eka_display_page', 0, '– Standard från inställningarna –'); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+        <p>Sidan som visar kurserna i kategorin. Sidan ska innehålla <code>[enkel_kurs]</code>.</p></div>
     <?php }
 
     public static function category_edit_fields($term) {
@@ -57,11 +60,20 @@ final class EKA_Courses {
         <tr class="form-field"><th><label for="eka_deposit_percent">Föranmälningsavgift (%)</label></th>
         <td><input type="number" min="0" max="100" step="0.1" name="eka_deposit_percent" id="eka_deposit_percent" value="<?php echo esc_attr($value); ?>">
         <p class="description">Andel av kurskostnaden som betalas vid anmälan. 100 = hela beloppet direkt. Lämna tomt för standardvärdet (<?php echo esc_html(get_option('eka_deposit_percent', 20)); ?> %).</p></td></tr>
+        <tr class="form-field"><th><label for="eka_display_page">Visningssida</label></th>
+        <td><?php echo EKA_Display::page_dropdown('eka_display_page', get_term_meta($term->term_id, EKA_Display::TERM_META, true), '– Standard från inställningarna –'); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+        <p class="description">Sidan som visar kurserna i kategorin. Sidan ska innehålla <code>[enkel_kurs]</code>.</p></td></tr>
     <?php }
 
     public static function save_category($term_id) {
         // WordPress har redan kontrollerat formulärets nonce innan dessa krokar körs.
-        if (!current_user_can('manage_categories') || !isset($_POST['eka_deposit_percent'])) return;
+        if (!current_user_can('manage_categories')) return;
+        if (isset($_POST['eka_display_page'])) {
+            $page = absint($_POST['eka_display_page']);
+            if ($page) update_term_meta($term_id, EKA_Display::TERM_META, $page);
+            else delete_term_meta($term_id, EKA_Display::TERM_META);
+        }
+        if (!isset($_POST['eka_deposit_percent'])) return;
         $raw = trim(sanitize_text_field(wp_unslash($_POST['eka_deposit_percent'])));
         if ($raw === '') delete_term_meta($term_id, 'eka_deposit_percent');
         else update_term_meta($term_id, 'eka_deposit_percent', min(100, max(0, (float) str_replace(',', '.', $raw))));

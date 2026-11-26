@@ -2,7 +2,7 @@
 Contributors: JohanWebsmedjan
 Requires at least: 6.2
 Requires PHP: 7.4
-Stable tag: 2.0.0
+Stable tag: 2.1.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,6 +17,14 @@ Utvecklas och underhålls av Websmedjan: https://github.com/JohanWebsmedjan
 4. Skapa kategorier under Kurser > Kategorier och ange föranmälningsavgift i procent (100 = hela beloppet direkt).
 5. Skapa kurser under Kurser > Lägg till kurs.
 6. Lägg shortcoden [enkel_kurslista] på sidan där kursutbudet ska visas, eller [enkel_kursdatumlista] för en datumlista. Båda kan begränsas med kategori="slug".
+
+== Visningssida ==
+Kurserna kan visas med en egen designad sida i stället för temats mall:
+1. Skapa en vanlig sida och lägg [enkel_kurs] där kursen ska visas.
+2. Välj sidan som visningssida under Kurser > Inställningar, eller på en kategori för att bara gälla den kategorins kurser.
+När en kurs öppnas visas sidan, med sidans mall, och [enkel_kurs] byts mot kursens beskrivning, samarbetspartner, informationssidor och anmälningsformulär. Kurserna behåller sina egna adresser, så länkar i mail och kurslistor fungerar som tidigare.
+Delarna kan placeras var för sig: [enkel_kurs del="titel,bild,beskrivning,utdrag,pris,tillfallen,partners,information,formular"]. Med id="123" visas en viss kurs på vilken sida som helst.
+Sidan måste vara byggd med WordPress blockredigerare eller den klassiska redigeraren. Sidbyggare som Elementor sparar sin layout på ett annat sätt och fungerar inte som visningssida.
 
 == Kursens inställningar ==
 * Rubrik och beskrivning skrivs i WordPress vanliga redigerare.

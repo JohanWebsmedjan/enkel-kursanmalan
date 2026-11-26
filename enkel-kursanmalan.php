@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Enkel kursanmälan med Swish
  * Description: Kurser med egna anmälningslistor, kategorier med betalregler, välkomstmail, utskick och Swish-betalning.
- * Version: 2.0.0
+ * Version: 2.1.0
  * Requires PHP: 7.4
  * Requires at least: 6.2
  * Author: Websmedjan
@@ -16,7 +16,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('EKA_VERSION', '2.0.0');
+define('EKA_VERSION', '2.1.0');
 define('EKA_FILE', __FILE__);
 define('EKA_DIR', plugin_dir_path(__FILE__));
 define('EKA_URL', plugin_dir_url(__FILE__));
@@ -27,6 +27,7 @@ require_once EKA_DIR . 'includes/class-eka-courses.php';
 require_once EKA_DIR . 'includes/class-eka-mailer.php';
 require_once EKA_DIR . 'includes/class-eka-admin.php';
 require_once EKA_DIR . 'includes/class-eka-frontend.php';
+require_once EKA_DIR . 'includes/class-eka-display.php';
 require_once EKA_DIR . 'includes/class-eka-newsletter.php';
 require_once EKA_DIR . 'includes/class-eka-updater.php';
 
@@ -42,5 +43,6 @@ EKA_Core::init();
 EKA_Courses::init();
 EKA_Admin::init();
 EKA_Frontend::init();
+EKA_Display::init();
 EKA_Newsletter::init();
 EKA_Updater::init();

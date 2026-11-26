@@ -13,7 +13,8 @@ Ett WordPress-plugin för kurser där varje kurs sköts separat: egen anmälning
 - Per kurs i admin: anmälningslista, CSV-export, avbokning, utskick och maillista med avregistreringslänk
 - Swish-länk och QR-kod på tacksidan
 - Valfri koppling till The Newsletter Plugin: den som vill ha information om kommande kurser läggs automatiskt i vald nyhetsbrevslista
-- Shortcodes: `[enkel_kurslista]` och `[enkel_kursdatumlista]`, båda med `kategori="slug"`
+- Visningssida: en egen designad sida som mall för kurserna, för alla kurser eller per kategori
+- Shortcodes: `[enkel_kurslista]` och `[enkel_kursdatumlista]`, båda med `kategori="slug"`, samt `[enkel_kurs]` för visningssidan
 
 ## Kodstruktur
 
@@ -25,12 +26,30 @@ Ett WordPress-plugin för kurser där varje kurs sköts separat: egen anmälning
 | `includes/class-eka-mailer.php` | Välkomstmail, avisering och kortkoder |
 | `includes/class-eka-admin.php` | Översikt, kurssida, utskick, maillista, inställningar |
 | `includes/class-eka-frontend.php` | Kurssida, anmälan, tacksida, avregistrering |
+| `includes/class-eka-display.php` | Visningssida och shortcoden `[enkel_kurs]` |
 | `includes/class-eka-newsletter.php` | Koppling till The Newsletter Plugin |
 | `includes/class-eka-updater.php` | Uppdateringar från GitHub-releaser |
 
 ## Installation
 
 Ladda ner ZIP-filen från den senaste releasen och installera den via **Tillägg → Lägg till nytt → Ladda upp tillägg** i WordPress.
+
+## Visningssida
+
+Som standard visas en kurs med temats mall för enskilda inlägg. Vill du styra utseendet:
+
+1. Skapa en vanlig sida, designa den som du vill och lägg `[enkel_kurs]` där kursen ska visas.
+2. Välj sidan som **Visningssida** under **Kurser → Inställningar**. En kategori kan ha en egen visningssida som gäller före standardsidan.
+
+När en kurs öppnas används sidans innehåll och sidmall. Kurserna behåller sina adresser (`/kurser/...`), så länkar i mail, kurslistor och tacksidan fungerar som tidigare.
+
+| Shortcode | Visar |
+| --- | --- |
+| `[enkel_kurs]` | Beskrivning, samarbetspartner, informationssidor och anmälningsformulär |
+| `[enkel_kurs del="bild,pris"]` | Valda delar: `titel`, `bild`, `beskrivning`, `utdrag`, `pris`, `tillfallen`, `partners`, `information`, `formular` |
+| `[enkel_kurs id="123"]` | En viss kurs, på vilken sida som helst |
+
+Tackrutan med Swish visas automatiskt vid den första `[enkel_kurs]` på sidan. Visningssidan behöver vara byggd med blockredigeraren eller den klassiska redigeraren. Sidbyggare som Elementor fungerar inte som visningssida.
 
 ## Uppdateringar
 
