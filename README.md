@@ -14,7 +14,7 @@ Ett WordPress-plugin för kurser där varje kurs sköts separat: egen anmälning
 - Swish-länk och QR-kod på tacksidan
 - Valfri koppling till The Newsletter Plugin: den som vill ha information om kommande kurser läggs automatiskt i vald nyhetsbrevslista
 - Visningssida: en egen designad sida som mall för kurserna, för alla kurser eller per kategori
-- Shortcodes med samma utseende: `[enkel_kurslista]` (en rad per kurs med nästa tillfälle och pris) och `[enkel_kursdatumlista]` (en rad per kommande tillfälle), båda med `kategori="slug"`, samt `[enkel_kurs]` för visningssidan
+- Shortcodes med samma utseende: `[enkel_kurslista]` (en rad per kurs med nästa tillfälle) och `[enkel_kursdatumlista]` (en rad per kommande tillfälle), båda med `kategori="slug"`, samt `[enkel_kurs]` för visningssidan
 
 ## Kodstruktur
 

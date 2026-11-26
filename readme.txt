@@ -2,7 +2,7 @@
 Contributors: JohanWebsmedjan
 Requires at least: 6.2
 Requires PHP: 7.4
-Stable tag: 2.1.1
+Stable tag: 2.1.2
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,7 +16,7 @@ Utvecklas och underhålls av Websmedjan: https://github.com/JohanWebsmedjan
 3. Gå till Kurser > Inställningar och fyll i Swish-nummer, standard för föranmälningsavgift och standardmall för välkomstmail.
 4. Skapa kategorier under Kurser > Kategorier och ange föranmälningsavgift i procent (100 = hela beloppet direkt).
 5. Skapa kurser under Kurser > Lägg till kurs.
-6. Lägg shortcoden [enkel_kurslista] på sidan där kursutbudet ska visas (en rad per kurs med nästa tillfälle och pris), eller [enkel_kursdatumlista] för en rad per kommande tillfälle i datumordning. Båda har samma utseende och kan begränsas med kategori="slug".
+6. Lägg shortcoden [enkel_kurslista] på sidan där kursutbudet ska visas (en rad per kurs med nästa tillfälle), eller [enkel_kursdatumlista] för en rad per kommande tillfälle i datumordning. Båda har samma utseende och kan begränsas med kategori="slug".
 
 == Visningssida ==
 Kurserna kan visas med en egen designad sida i stället för temats mall:

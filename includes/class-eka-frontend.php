@@ -31,19 +31,22 @@ final class EKA_Frontend {
     /* ---------------- Shortcodes ---------------- */
 
     /**
-     * [enkel_kurslista]: en rad per kurs med nästa kurstillfälle och pris.
-     * Samma utseende som datumlistan, så båda listorna ser likadana ut.
+     * [enkel_kurslista]: en rad per kurs med kursens nästa tillfälle, i datumordning.
+     * Ser ut exakt som datumlistan (datum överst, kursnamn under), men varje kurs visas bara en gång.
      */
     public static function course_list_shortcode($atts) {
         $q = self::course_query($atts);
         $items = [];
         while ($q->have_posts()) { $q->the_post();
             $next = EKA_Core::upcoming_sessions(get_the_ID())[0] ?? null;
-            $price = (float) get_post_meta(get_the_ID(), '_eka_price', true);
-            $details = $next ? 'Nästa tillfälle: ' . self::date_time($next) : 'Inga kommande tillfällen';
-            if ($price > 0) $details .= ' · ' . EKA_Core::money($price) . ' kr';
-            $items[] = ['url' => get_permalink(), 'heading' => get_the_title(), 'details' => $details];
+            $items[] = [
+                'sort' => $next ? EKA_Core::session_start($next)->getTimestamp() : PHP_INT_MAX, // kurser utan datum sist
+                'url' => get_permalink(),
+                'heading' => $next ? self::date_time($next) : 'Inga kommande tillfällen',
+                'details' => get_the_title(),
+            ];
         } wp_reset_postdata();
+        usort($items, function($a, $b) { return $a['sort'] <=> $b['sort'] ?: strcmp($a['details'], $b['details']); });
         return self::list_html($items, 'Det finns inga kurser just nu.');
     }
 
